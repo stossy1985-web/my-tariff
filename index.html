@@ -100,7 +100,7 @@ body.split .crumb{padding:4px 12px 6px}
 /* ---------- 表 ---------- */
 .wrap{flex:1;overflow:auto;padding:0 18px 18px}
 body.split .wrap{padding:0 12px 12px}
-.card{background:var(--panel);border-radius:14px;box-shadow:var(--shadow);overflow:clip;min-width:max-content}
+.card{background:var(--panel);border-radius:14px;box-shadow:var(--shadow);overflow:clip;min-width:min-content}
 table{border-collapse:separate;border-spacing:0;width:100%}
 thead th{position:sticky;top:0;z-index:4;background:#fff;color:var(--sub);font-size:11px;font-weight:700;letter-spacing:.04em;text-align:left;padding:10px 10px;white-space:nowrap;border-bottom:1px solid var(--line)}
 thead th.epa{color:var(--navy2)}
@@ -108,6 +108,28 @@ thead th.xr{color:#7a5a00}
 td{padding:9px 10px;border-bottom:1px solid var(--line2);vertical-align:top;line-height:1.5}
 tr.h-gou td{background:var(--gou);color:#2a3a52;font-weight:700;padding:7px 12px;border-bottom:1px solid var(--line2)}
 tr.h-gou.flash td{animation:flash 1.6s var(--ease)}
+tr.h-gou.hit td{background:#ffeeb0;box-shadow:inset 4px 0 0 var(--gold)}
+tr.h-kou.hit td{box-shadow:inset 6px 0 0 var(--gold)}
+tr.row.flash td{animation:flash 1.6s var(--ease)}
+tr.row.hit td.stat{box-shadow:inset 3px 0 0 #ecd9a0}
+tr.row.hit.cur td{background:#fffbe6}
+tr.row.hit.cur td.stat{box-shadow:inset 3px 0 0 var(--gold)}
+.sib{display:inline;font-size:11px;color:#8a95a5;font-weight:400;margin-left:2px}
+.gh .sib{font-size:11px}
+tr.tnode td{padding-top:4px;padding-bottom:4px;border-bottom:1px dashed var(--line2);color:#3a4759;cursor:default}
+tr.tnode td.name{font-weight:600}
+.dash{color:#9aa5b4;margin-right:4px;font-family:Consolas,monospace;letter-spacing:-1px}
+td.name .nm.same{color:#9aa5b4}
+.jumpnav{display:inline-flex;align-items:center;gap:4px;margin-left:8px}
+.jumpnav button{border:1px solid var(--line);background:#fff;border-radius:8px;height:26px;min-width:30px;cursor:pointer;color:var(--navy);font-weight:700}
+.jumpnav button:hover{background:var(--navy-soft)}
+.jumpnav span{font-size:12px;color:var(--sub);font-weight:700;white-space:nowrap}
+body.dense td{padding-top:3px;padding-bottom:3px;line-height:1.35}
+body.dense tr.h-gou td{padding-top:4px;padding-bottom:4px}
+body.dense tr.tnode td{padding-top:2px;padding-bottom:2px}
+body.dense td.name .tg{margin-top:1px}
+body.dense .cbtn{padding:1px 8px;margin:-2px -8px}
+body.dense td.name .cn{margin-top:2px;padding:0 6px}
 tr.h-gou{cursor:pointer}
 tr.h-gou:hover td{background:#e9f0f9}
 .gchev{display:inline-flex;width:16px;height:16px;color:var(--navy2);align-self:center;transition:transform var(--t) var(--ease)}
@@ -143,6 +165,11 @@ td.stat{white-space:nowrap;font-family:Consolas,"BIZ UDGothic",monospace;color:#
 td.stat.dim{color:transparent}
 td.c-br{white-space:nowrap;font-weight:800;text-align:center;color:var(--faint)}
 tr.row.branch td.c-br{color:var(--branch-ink)}
+.tw{display:flex;align-items:flex-start}.tw .pre{flex:none;white-space:nowrap;line-height:inherit}.tw .tb{min-width:0;flex:1}
+td.name.tn{max-width:none}td.name.tn .tw{contain:inline-size}   /* 番号のない階層の行は右の空いている列まで伸ばす */
+.dash b{font-size:.8em;font-weight:700;margin:0 3px 0 1px;font-family:ui-monospace,Consolas,monospace}
+.ibr{font-weight:800;color:var(--branch-ink);margin-right:4px}
+td.name .nm.same .ibr{opacity:1}
 td.name{min-width:260px;max-width:440px}
 td.name .nm{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 tr.row.open td.name .nm{-webkit-line-clamp:unset;display:block}
@@ -294,6 +321,8 @@ body.split .target{display:flex}
 .sheet h3:first-child{margin-top:4px}
 p.lead{color:var(--sub);margin:0 0 12px;line-height:1.6}
 .opts{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.lkl{font-size:12px;font-weight:700;color:var(--sub);margin:12px 0 6px}
+.lkl:first-child{margin-top:0}
 .opt{position:relative;display:flex;align-items:center;gap:8px;border:1.5px solid var(--line);border-radius:10px;padding:9px 10px;cursor:pointer;background:#fff;text-align:left;transition:border-color var(--t),background var(--t),transform .12s}
 .opt:hover{border-color:#b8c7da}
 .opt:active{transform:scale(.98)}
@@ -432,6 +461,8 @@ footer.full{white-space:normal}
     <div class="opts" id="xrOpts"></div>
     <h3>EPA</h3>
     <div class="opts" id="epaOpts"></div>
+    <h3>見え方</h3>
+    <div id="lookOpts"></div>
     <h3 data-i18n="fsH"></h3>
     <div class="opts" id="fsOpts"></div>
     <h3 data-i18n="condH"></h3>
@@ -499,7 +530,7 @@ footer.full{white-space:normal}
 "use strict";
 const D = window.TARIFF_DATA;
 const $ = s => document.querySelector(s);
-const K = {fs:"mytariff.fontsize.v1", cond:"mytariff.cond.v1", bk:"mytariff.backup.v1", memo:"htmltariff.memo.v1", epa:"htmltariff.epa.v1", recent:"htmltariff.recent.v1", xr:"mytariff.xrates.v1", fav:"mytariff.fav.v1",
+const K = {look:"mytariff.look.v1", fs:"mytariff.fontsize.v1", cond:"mytariff.cond.v1", bk:"mytariff.backup.v1", memo:"htmltariff.memo.v1", epa:"htmltariff.epa.v1", recent:"htmltariff.recent.v1", xr:"mytariff.xrates.v1", fav:"mytariff.fav.v1",
   split:"mytariff.split.v1", link:"mytariff.link.v1", lang:"mytariff.lang.v1", q2:"mytariff.q2.v1"};
 const load = (k, def) => { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : def; } catch(e) { return def; } };
 const save = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch(e) {} };
@@ -576,12 +607,31 @@ const rows = D.rows.map((r, i) => {
   o.cond = o.note || (o.br && o.old ? T_.ja.oldPre + o.old : "");   // 分岐の理由：NACCS備考、なければ旧品目表の区分
   RATES.forEach((n, k) => o.r[n] = g(RATE_START + k));
   o.digits = o.stat.replace(/[.\-]/g, "");
+  o.segs = o.name.split(" ／ ");
   o.text = (o.code+" "+o.stat+" "+o.digits+" "+o.kou+" "+o.kname+" "+o.gname+" "+o.name+" "+o.en+" "+o.note+" "+o.old).toLowerCase();
   return o;
 });
 const byCode = new Map(rows.map(o => [o.code, o]));
 rows.forEach(o => { if (!o.kname) o.kname = o.gname; });            // 号に分かれない項は、項名が号名の側に入っている
 const kouInfo = new Map(); rows.forEach(o => { if (!kouInfo.has(o.kou)) kouInfo.set(o.kou, o.kname); });
+// ---- 「その他のもの」の比べる相手：同じ親の下に並ぶ兄弟（品名の階層・号名の階層から作る） ----
+const isOther = t => /^その他/.test(t);
+const sibItem = new Map(), sibGou = new Map(), gouSeen = new Set();
+const addSib = (m, k, v) => { if (!m.has(k)) m.set(k, []); const a = m.get(k); if (!a.includes(v)) a.push(v); };
+rows.forEach(o => {
+  o.segs.forEach((t, d) => addSib(sibItem, o.gou + "|" + o.segs.slice(0, d).join("／"), t));
+  if (!gouSeen.has(o.gou)) { gouSeen.add(o.gou); const gs = o.gname.split(" ／ "); gs.forEach((t, d) => addSib(sibGou, o.kou + "|" + gs.slice(0, d).join("／"), t)); }
+});
+const sibsOf = (m, base, segs, d) => (m.get(base + "|" + segs.slice(0, d).join("／")) || []).filter(x => x !== segs[d] && !isOther(x));
+function sibHint(list){
+  if (!list.length) return "";
+  const cut = t => t.length > 18 ? t.slice(0, 18) + "…" : t;
+  const shown = list.slice(0, 3).map(cut).join("・") + (list.length > 3 ? " など" : "");
+  return `<span class="sib" title="${esc("比べる相手：" + list.join("／"))}">（${esc(shown)} 以外）</span>`;
+}
+// 階層の1段分を、「その他」なら比べる相手を添えて出す
+function segHtml(m, base, segs, d, words){ return hi(segs[d], words) + (look.sib && isOther(segs[d]) ? sibHint(sibsOf(m, base, segs, d)) : ""); }
+const pathHtml = (m, base, segs, words) => segs.map((_, d) => segHtml(m, base, segs, d, words)).join(" ／ ");
 // ---- 特殊関税（不当廉売関税・相殺関税・緊急関税・報復関税）：号（6桁）単位で印を付ける ----
 const SP_SHORT = {"不当廉売関税":"不当廉売","相殺関税":"相殺関税","緊急関税":"緊急関税","報復関税":"報復関税"};
 const splitPair = (s, sep) => { const i = s.lastIndexOf(sep); return i < 0 ? [s, ""] : [s.slice(0, i), s.slice(i + 1)]; };
@@ -616,6 +666,7 @@ let xrSel = load(K.xr, []).filter(e => XRATES.includes(e));
 let recent = load(K.recent, []);
 let favs = load(K.fav, {});            // {荷主名: {NACCS用コード: {note, date}}}
 let split = load(K.split, false), linkOn = load(K.link, true);
+let look = Object.assign({view:"tree", dense:true, startFold:false, nav:"jump", sib:true}, load(K.look, {}));   // 見え方の設定
 let fontSize = load(K.fs, 1);            // 文字の大きさ（表の部分の倍率）
 let condShow = load(K.cond, false);       // 分岐の条件を行の中にいつも出すか（2画面のときは出さない）
 const today = () => { const d = new Date(); return `${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,"0")}/${String(d.getDate()).padStart(2,"0")}`; };
@@ -697,15 +748,21 @@ class Pane {
     this.path = el.querySelector(".path"); this.count = el.querySelector(".count"); this.linkinfo = el.querySelector(".linkinfo");
     this.foldBtn = el.querySelector(".foldBtn"); this.folded = new Set();
     this.foldBtn.onclick = () => this.foldAll();
+    this.path.addEventListener("click", ev => {
+      const jp = ev.target.closest("[data-jp]"); if (!jp || !this.jump) return;
+      const n = this.jump.hits.length;
+      this.hitIdx = ((this.jump.idx + Number(jp.dataset.jp)) % n + n) % n;
+      this.render(false);
+    });
     let timer = null;
-    this.q.addEventListener("input", () => { this.fav = null; this.folded.clear(); clearTimeout(timer); timer = setTimeout(() => { this.changed(); this.render(); }, 160); });
+    this.q.addEventListener("input", () => { this.fav = null; this.folded.clear(); clearTimeout(timer); timer = setTimeout(() => { this.fresh = true; this.hitIdx = 0; this.changed(); this.render(); }, 160); });
     el.querySelector(".qClear").onclick = () => { this.go(""); this.q.focus(); };
     el.addEventListener("focusin", () => setActive(this)); el.addEventListener("pointerdown", () => setActive(this));
     this.wrap.addEventListener("scroll", () => { if (!this.raf) this.raf = requestAnimationFrame(() => this.track()); }, {passive:true});
     this.wrap.addEventListener("click", ev => this.click(ev));
   }
   value(){ return this.q.value; }
-  go(q, opts = {}){ this.fav = null; this.q.value = q; this.openRows.clear(); this.folded.clear(); this.changed(opts); this.render(opts.animate !== false); }
+  go(q, opts = {}){ this.fav = null; this.q.value = q; this.openRows.clear(); this.folded.clear(); this.fresh = !opts.fromLink; this.hitIdx = 0; this.changed(opts); this.render(opts.animate !== false); }
   showFav(name){ this.fav = name; this.q.value = ""; this.openRows.clear(); this.folded.clear(); this.changed(); this.render(); }
   changed(opts = {}){
     if (this.idx === 0) { const q = this.q.value.trim(); history.replaceState(null, "", q ? "#q=" + encodeURIComponent(q) : location.pathname + location.search); }
@@ -746,7 +803,25 @@ class Pane {
         return;
       }
       words = res.words && res.words.length ? res.words : null;
-      if (res.mode === "num") {
+      this.jump = null;
+      if (look.nav === "jump") {
+        // 移動：当たった行だけでなく、その類の表をまるごと出して、当たった場所へ飛ぶ
+        // 文字の検索は号ごとに1か所として、前へ・次へで号を渡り歩く
+        const seenG = new Set();
+        const hits = res.mode === "num" ? list : res.list.filter(o => !seenG.has(o.gou) && seenG.add(o.gou));
+        const allHit = res.mode === "num" ? list : res.list;
+        const idx = res.mode === "num" ? 0 : Math.min(this.hitIdx || 0, hits.length - 1);
+        const cur = hits[idx];
+        const nd = q.replace(/\D/g, "").length;
+        // 番号で探したときは、入れた桁の見出しだけに色を付ける（4桁→項、6桁→号、それより長い→その統計細分の行）
+        const lvl = res.mode !== "num" ? "row" : nd <= 4 ? "kou" : nd <= 6 ? "gou" : "row";
+        this.jump = {hits, idx, cur, lvl, hitSet:new Set(lvl === "row" ? allHit.map(o => o.code) : []), num:res.mode === "num"};
+        list = rows.filter(o => o.ch === cur.ch); over = false;
+        const c = chapters.get(cur.ch);
+        const nav = this.jump.num ? `<span class="jumpnav"><span>該当 ${hits.length} 件</span></span>`
+          : `<span class="jumpnav"><button data-jp="-1" title="前へ">◀</button><span>${idx + 1} / ${hits.length} 号</span><button data-jp="1" title="次へ">▶</button></span>`;
+        this.setPath(`<div class="l1">${link(cur.ch, `第${esc(cur.ch)}類　${esc(c ? c.name : "")}`)}${this.jump.num ? "" : `　<span class="qt">「${esc(q)}」</span>`}${nav}</div><div class="l2"><span class="cur"></span></div>`, `${list.length.toLocaleString()} ${T("items")}`);
+      } else if (res.mode === "num") {
         const f = list[0], L = res.p.length, c = chapters.get(f.ch);
         let p = `<div class="l1">${link(f.ch, `第${esc(f.ch)}類　${esc(c ? c.name : "")}`)}</div><div class="l2">`;
         if (L >= 4) p += kchip(f.kou, f.kname);
@@ -757,28 +832,59 @@ class Pane {
         this.setPath(`<div class="l1"><span class="qt">「${esc(q)}」${T("results")}</span></div><div class="l2"><span class="cur"></span></div>`, over ? `${res.list.length.toLocaleString()}${T("of")}${MAXTEXT}` : `${list.length.toLocaleString()} ${T("items")}`);
       }
     }
+    if (this.fresh && look.startFold) {
+      // 検索結果を号だけ（折りたたみ）で出す。移動のときは行き先の号だけ開く
+      const gous = [...new Set(list.map(o => o.gou))];
+      if (gous.length > 1) { this.folded = new Set(gous); if (this.jump) this.folded.delete(this.jump.cur.gou); }
+    }
+    this.fresh = false;
     const compact = isCompact();
     const extra = [...xrSel.map(n => [n, "xr"]), ...epaSel.map(n => [n, "epa"])];
-    const heads = [[T("hStat")],[T("hBr")],[T("hName")],[T("hCode")]].concat([[T("hUnit")]])
+    const tv = look.view === "tree" && !(lang === "en");
+    const step = split || narrow ? 6 : 14;   // 半画面では字下げを浅くして品名の幅を残す
+    // 段の印：全画面は「－」を段の数だけ、半画面は「－」1つに段の数を添える（例：－3）
+    const dashes = d => split || narrow ? `<span class="dash">－${d > 0 ? `<b>${d + 1}</b>` : ""}</span>` : `<span class="dash">${"－".repeat(d + 1)}</span>`;
+    const heads = [[T("hStat")]].concat(tv ? [] : [[T("hBr")]]).concat([[T("hName")],[T("hCode")],[T("hUnit")]])
       .concat(MAIN_RATES.map(n => [rl(n)])).concat(extra.map(([n, c]) => [rl(n), c])).concat(compact ? [] : [[T("hMemo")]]).concat([[""],[""]]);
     const ncol = heads.length;
     let h = `<div class="card"><table class="${animate ? "anim" : ""}"><thead><tr>${heads.map(([t, c]) => `<th${c ? ` class="${c}"` : ""}>${esc(t)}</th>`).join("")}</tr></thead><tbody>`;
     let pg = null, ps = null, pk = null, n = 0;
+    this._tg = null; this._ts = [];
     const gcount = new Map(); list.forEach(o => gcount.set(o.gou, (gcount.get(o.gou) || 0) + 1));
     const I = () => ` style="--i:${Math.min(n++, 40)}"`;
     const fv = this.fav ? favs[this.fav] : null;
     for (const o of list) {
-      if (o.kou !== pk) { h += `<tr class="h-kou" data-kou="${esc(o.kou)}"><td colspan="${ncol}"><span class="kh"><code>${esc(o.kou)}</code>${hi(o.kname, words)}</span></td></tr>`; pk = o.kou; }
-      if (o.gou !== pg) { const fd = this.folded.has(o.gou); h += `<tr class="h-gou${fd ? " folded" : ""}" data-kou="${esc(o.kou)}" data-gou="${esc(o.gou)}"${I()}><td colspan="${ncol}"><span class="gh"><span class="gchev">${svg("down")}</span><code>${esc(o.gou)}</code>${hi(o.gname, words)}${spOf(o.gou.replace(".", "")).map(spTag).join("")}<span class="gcnt">${gcount.get(o.gou)} ${T("items")}</span></span></td></tr>`; pg = o.gou; ps = null; }
+      if (o.kou !== pk) { h += `<tr class="h-kou${this.jump && this.jump.lvl === "kou" && o.kou === this.jump.cur.kou ? " hit" : ""}" data-kou="${esc(o.kou)}"><td colspan="${ncol}"><span class="kh"><code>${esc(o.kou)}</code>${hi(o.kname, words)}</span></td></tr>`; pk = o.kou; }
+      if (o.gou !== pg) { const fd = this.folded.has(o.gou); h += `<tr class="h-gou${fd ? " folded" : ""}${this.jump && this.jump.lvl === "gou" && o.gou === this.jump.cur.gou ? " hit" : ""}" data-kou="${esc(o.kou)}" data-gou="${esc(o.gou)}"${I()}><td colspan="${ncol}"><span class="gh"><span class="gchev">${svg("down")}</span><code>${esc(o.gou)}</code>${pathHtml(sibGou, o.kou, o.gname.split(" ／ "), words)}${spOf(o.gou.replace(".", "")).map(spTag).join("")}<span class="gcnt">${gcount.get(o.gou)} ${T("items")}</span></span></td></tr>`; pg = o.gou; ps = null; }
       const fcls = this.folded.has(o.gou) ? " fold" : "";
       const m = memos[o.code], open = this.openRows.has(o.code), starred = favOf(o.code).length > 0;
       const nm = lang === "en" && o.en ? o.en : o.name;
       const tags = o.sp.map(spTag).join("") + (o.r["暫定"] && !xrSel.includes("暫定") ? `<span class="tag zan" title="${esc(T("zan") + " " + rv(o.r["暫定"]))}">${T("zan")} ${esc(rv(o.r["暫定"]))}</span>` : "") + (o.br && o.note ? `<span class="tag">${T("cond")}</span>` : (o.br && o.old ? `<span class="tag old" title="${esc(T("oldTip"))}">${T("oldTag")}</span>` : ""));
+      // 品名：標準は1行に「／」でつなぐ、原文の階層は親の行を字下げで出してから自分の段だけ出す
+      let nameCell, same = false;
+      let ind = 0, pre = "";
+      if (lang === "en" && o.en) nameCell = hi(o.en, words);
+      else if (tv) {
+        if (o.gou !== this._tg) { this._tg = o.gou; this._ts = []; }
+        const prev = this._ts; let k = 0;
+        while (k < o.segs.length - 1 && k < prev.length && prev[k] === o.segs[k]) k++;
+        same = prev.length === o.segs.length && prev.every((t, i) => t === o.segs[i]);
+        for (let d = k; d < o.segs.length - 1 && !same; d++) {
+          h += `<tr class="tnode${fcls}" data-g="${esc(o.gou)}"><td></td><td class="name tn" colspan="${ncol - 1}"><div class="tw" style="margin-left:${d * step}px"><span class="pre">${dashes(d)}</span><div class="tb">${segHtml(sibItem, o.gou, o.segs, d, words)}</div></div></td></tr>`;
+        }
+        const d = o.segs.length - 1;
+        // 分岐の印は品名のすぐ前に置く（字下げしても印と品名が離れない）
+        ind = d * step;
+        pre = `<span class="pre">${dashes(d)}${o.br ? `<span class="ibr">${esc(o.br)}</span>` : ""}</span>`;
+        nameCell = segHtml(sibItem, o.gou, o.segs, d, words);
+        this._ts = o.segs;
+      } else nameCell = pathHtml(sibItem, o.gou, o.segs, words);
+      const hit = this.jump && this.jump.hitSet.has(o.code) ? (o.gou === this.jump.cur.gou ? " hit cur" : " hit") : "";
       const fnote = fv && fv[o.code] && fv[o.code].note ? `<span class="fn">★ ${esc(fv[o.code].note)}</span>` : "";
-      h += `<tr class="row${o.br ? " branch" : ""}${open ? " open" : ""}${fcls}" data-code="${o.code}" data-g="${esc(o.gou)}"${I()}>`
+      h += `<tr class="row${o.br ? " branch" : ""}${open ? " open" : ""}${fcls}${hit}" data-code="${o.code}" data-g="${esc(o.gou)}"${I()}>`
         + `<td class="stat${o.stat === ps ? " dim" : ""}">${esc(o.stat)}</td>`
-        + `<td class="c-br">${esc(o.br) || "・"}</td>`
-        + `<td class="name"><div class="nm">${hi(nm, words)}</div>${tags ? `<div class="tg">${tags}</div>` : ""}${condShow && !split && o.br && o.cond ? `<div class="cn${narrow ? " one" : ""}${o.note ? "" : " old"}" title="${esc(T("cnTip"))}">${hi(o.note || (T("oldPre") + o.old), words)}</div>` : ""}${fnote}</td>`
+        + (tv ? "" : `<td class="c-br">${esc(o.br) || "・"}</td>`)
+        + `<td class="name"><div${tv ? ` class="tw" style="margin-left:${ind}px"` : ""}>${pre}<div class="tb"><div class="nm${same ? " same" : ""}">${nameCell}</div>${tags ? `<div class="tg">${tags}</div>` : ""}${condShow && !split && o.br && o.cond ? `<div class="cn${narrow ? " one" : ""}${o.note ? "" : " old"}" title="${esc(T("cnTip"))}">${hi(o.note || (T("oldPre") + o.old), words)}</div>` : ""}${fnote}</div></div></td>`
         + `<td class="code"><button class="cbtn" data-copy="${o.code}" title="10桁だけをコピー（改行なし）">${hi(o.code, words)}${svg("copy")}</button></td>`
         + `<td class="unit">${esc([o.u1, o.u2].filter(Boolean).join(" / "))}</td>`
         + MAIN_RATES.map(n => rateCell(o, n)).join("")
@@ -793,6 +899,10 @@ class Pane {
     const keep = animate ? 0 : this.wrap.scrollTop;
     this.wrap.innerHTML = h;
     this.wrap.scrollTop = keep;
+    if (this.jump) {
+      const j = this.jump, tgt = j.lvl === "kou" ? this.wrap.querySelector("tr.h-kou.hit") : j.lvl === "gou" ? this.wrap.querySelector("tr.h-gou.hit") : this.wrap.querySelector(`tr.row[data-code="${j.cur.code}"]`);
+      if (tgt) this.scrollToRow(tgt);
+    }
     this.kouShown = null; this.gouShown = null; this.track();
     this.paintFold();
     if (this.idx === 0 && !this.fav) rememberSoon(q, list.length);
@@ -835,6 +945,13 @@ class Pane {
     this.foldBtn.querySelector("span").textContent = allFolded ? T("unfoldAll") : T("foldAll");
     // 号を折りたたんでいる間は、項の見出し行も出す（一覧で項の切れ目が分かるように）
     const card = this.wrap.querySelector(".card"); if (card) card.classList.toggle("outline", this.folded.size > 0);
+  }
+  scrollToRow(el){
+    const th = this.wrap.querySelector("thead th"); if (!th) return;
+    if (el.classList.contains("fold")) this.toggleGou(el.dataset.g, false);
+    // 行き先を画面の上から4分の1あたりに置き、上の兄弟も見えるようにする
+    this.wrap.scrollTop += el.getBoundingClientRect().top - th.getBoundingClientRect().bottom - this.wrap.clientHeight * 0.25;
+    el.classList.remove("flash"); void el.offsetWidth; el.classList.add("flash");
   }
   scrollToGou(gou){
     if (this.folded.has(gou)) this.toggleGou(gou, false);
@@ -956,6 +1073,29 @@ function paintView(){
   if (condShow) all.push(T("condH"));
   $("#viewNames").textContent = all.length ? all.join("・") : "—";
 }
+function applyLook(){ document.body.classList.toggle("dense", !!look.dense); }
+function buildLook(){
+  const box = $("#lookOpts"); box.innerHTML = "";
+  const groups = [
+    ["表示の形", "view", [["std", "標準（1行にまとめる）"], ["tree", "原文の階層（WEBタリフ型）"]]],
+    ["行の間隔", "dense", [[false, "標準"], [true, "詰める"]]],
+    ["検索の動き", "nav", [["filter", "絞り込み（当たった行だけ）"], ["jump", "移動（類の中で当たった所へ）"]]],
+    ["検索結果の最初", "startFold", [[false, "開いた状態"], [true, "号だけ（折りたたみ）"]]],
+    ["「その他」の比べる相手", "sib", [[true, "出す"], [false, "出さない"]]],
+  ];
+  for (const [label, key, opts] of groups) {
+    box.insertAdjacentHTML("beforeend", `<div class="lkl">${esc(label)}</div>`);
+    const g = document.createElement("div"); g.className = "opts";
+    for (const [v, t] of opts) {
+      const b = document.createElement("button"); b.className = "opt"; b.type = "button";
+      b.innerHTML = `<i>${svg("check")}</i><span>${esc(t)}</span>`;
+      b.setAttribute("aria-pressed", look[key] === v);
+      b.onclick = () => { look[key] = v; save(K.look, look); applyLook(); buildLook(); panes.forEach(p => { p.fresh = key === "startFold"; }); renderAll(false); };
+      g.appendChild(b);
+    }
+    box.appendChild(g);
+  }
+}
 function applyFont(){ document.documentElement.style.setProperty("--fz", fontSize); }
 function buildFont(){
   const box = $("#fsOpts"); box.innerHTML = "";
@@ -997,6 +1137,7 @@ function buildOpts(box, list, getSel, setSel, label){
 function buildView(){
   buildOpts($("#xrOpts"), XRATES, () => xrSel, v => { xrSel = v; save(K.xr, v); }, rl);
   buildOpts($("#epaOpts"), EPAS, () => epaSel, v => { epaSel = v; save(K.epa, v); });
+  buildLook();
   buildFont();
   buildCond();
   paintView();
@@ -1264,7 +1405,7 @@ function checkBackup(){
 $("#bkNow").onclick = () => { if (Object.keys(memos).length) exportMemos(); if (Object.keys(favs).length) setTimeout(exportFavs, 400); markExported(); toast("ダウンロードフォルダに書き出しました（myTARIFF_memo / myTARIFF_shippers）"); };
 $("#bkLater").onclick = () => { const b = bkState(); b.snooze = Date.now() + 7 * DAY; save(K.bk, b); checkBackup(); };
 
-applyFont(); applyLang(); applySplit(); checkBackup();
+applyLook(); applyFont(); applyLang(); applySplit(); checkBackup();
 const m0 = location.hash.match(/^#q=(.*)$/);
 panes[0].go(m0 ? decodeURIComponent(m0[1]) : "");
 if (split) { const q2 = load(K.q2, ""); if (q2) panes[1].go(q2, {animate:false}); else panes[1].render(); }
