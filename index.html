@@ -836,7 +836,7 @@ class Pane {
     if (this.fresh && look.startFold) {
       // 検索結果を号だけ（折りたたみ）で出す。移動のときは行き先の号だけ開く
       const gous = [...new Set(list.map(o => o.gou))];
-      if (gous.length > 1) { this.folded = new Set(gous); if (this.jump) this.folded.delete(this.jump.cur.gou); }
+      if (gous.length > 1) { this.folded = new Set(gous); if (this.jump && this.jump.lvl === "row") this.folded.delete(this.jump.cur.gou); }
     }
     this.fresh = false;
     const compact = isCompact();
@@ -950,13 +950,24 @@ class Pane {
   scrollToRow(el){
     const th = this.wrap.querySelector("thead th"); if (!th) return;
     if (el.classList.contains("fold")) this.toggleGou(el.dataset.g, false);
-    // 行き先を画面の上から4分の1あたりに置き、上の兄弟も見えるようにする
-    // 見出しは sticky で張り付くため、画面上の位置ではなく本来の位置（offsetTop の積み上げ）で測る
     const sticky = [el, ...el.querySelectorAll("*")].filter(x => getComputedStyle(x).position === "sticky");
-    sticky.forEach(x => x.style.position = "static");           // 張り付き分を外して本来の位置を測る
-    const want = el.getBoundingClientRect().top - this.wrap.getBoundingClientRect().top + this.wrap.scrollTop - th.offsetHeight - this.wrap.clientHeight * 0.25;
-    sticky.forEach(x => x.style.position = "");
-    this.wrap.scrollTop = Math.max(0, want);
+    // 行き先を、表の見える範囲の上から4分の1あたりに置く。
+    // 座標の単位が文字の大きさ（zoom）や画面の拡大率でずれても合うよう、「いまの位置との差」を測って足し、収まるまで繰り返す
+    const place = (force) => {
+      sticky.forEach(x => x.style.position = "static");           // 張り付き分を外して本来の位置を測る
+      const wr = this.wrap.getBoundingClientRect(), thb = th.getBoundingClientRect().bottom;
+      const goal = thb + (wr.bottom - thb) * 0.25;
+      const top = el.getBoundingClientRect().top, dy = top - goal;
+      sticky.forEach(x => x.style.position = "");
+      if (!force && top >= thb && top <= wr.bottom - 40) return true;   // もう見えている
+      const before = this.wrap.scrollTop;
+      this.wrap.scrollTop = before + dy;
+      return Math.abs(dy) < 2 || this.wrap.scrollTop === before;
+    };
+    for (let i = 0; i < 8 && !place(true); i++) { /* repeat */ }
+    // 行の出現アニメーションや表の再計算で高さが変わっても、行き先が見える範囲から外れていたら直す
+    const again = () => { if (el.isConnected) for (let i = 0; i < 4 && !place(false); i++) { /* repeat */ } };
+    requestAnimationFrame(again); setTimeout(again, 120); setTimeout(again, 500);
     el.classList.remove("flash"); void el.offsetWidth; el.classList.add("flash");
   }
   scrollToGou(gou){
