@@ -815,7 +815,8 @@ class Pane {
         const nd = q.replace(/\D/g, "").length;
         // 番号で探したときは、入れた桁の見出しだけに色を付ける（4桁→項、6桁→号、それより長い→その統計細分の行）
         const lvl = res.mode !== "num" ? "row" : nd <= 4 ? "kou" : nd <= 6 ? "gou" : "row";
-        this.jump = {hits, idx, cur, lvl, hitSet:new Set(lvl === "row" ? allHit.map(o => o.code) : []), num:res.mode === "num"};
+        const kouGou = (list.find(o => o.kou === cur.kou) || cur).gou;   // 項で探したときは、その項の最初の号を行き先にする（項の見出しは画面上部の札で出ているため）
+        this.jump = {hits, idx, cur, lvl, kouGou, hitSet:new Set(lvl === "row" ? allHit.map(o => o.code) : []), num:res.mode === "num"};
         list = rows.filter(o => o.ch === cur.ch); over = false;
         const c = chapters.get(cur.ch);
         const nav = this.jump.num ? `<span class="jumpnav"><span>該当 ${hits.length} 件</span></span>`
@@ -855,7 +856,7 @@ class Pane {
     const fv = this.fav ? favs[this.fav] : null;
     for (const o of list) {
       if (o.kou !== pk) { h += `<tr class="h-kou${this.jump && this.jump.lvl === "kou" && o.kou === this.jump.cur.kou ? " hit" : ""}" data-kou="${esc(o.kou)}"><td colspan="${ncol}"><span class="kh"><code>${esc(o.kou)}</code>${hi(o.kname, words)}</span></td></tr>`; pk = o.kou; }
-      if (o.gou !== pg) { const fd = this.folded.has(o.gou); h += `<tr class="h-gou${fd ? " folded" : ""}${this.jump && this.jump.lvl === "gou" && o.gou === this.jump.cur.gou ? " hit" : ""}" data-kou="${esc(o.kou)}" data-gou="${esc(o.gou)}"${I()}><td colspan="${ncol}"><span class="gh"><span class="gchev">${svg("down")}</span><code>${esc(o.gou)}</code>${pathHtml(sibGou, o.kou, o.gname.split(" ／ "), words)}${spOf(o.gou.replace(".", "")).map(spTag).join("")}<span class="gcnt">${gcount.get(o.gou)} ${T("items")}</span></span></td></tr>`; pg = o.gou; ps = null; }
+      if (o.gou !== pg) { const fd = this.folded.has(o.gou); h += `<tr class="h-gou${fd ? " folded" : ""}${this.jump && (this.jump.lvl === "gou" && o.gou === this.jump.cur.gou || this.jump.lvl === "kou" && o.gou === this.jump.kouGou) ? " hit" : ""}" data-kou="${esc(o.kou)}" data-gou="${esc(o.gou)}"${I()}><td colspan="${ncol}"><span class="gh"><span class="gchev">${svg("down")}</span><code>${esc(o.gou)}</code>${pathHtml(sibGou, o.kou, o.gname.split(" ／ "), words)}${spOf(o.gou.replace(".", "")).map(spTag).join("")}<span class="gcnt">${gcount.get(o.gou)} ${T("items")}</span></span></td></tr>`; pg = o.gou; ps = null; }
       const fcls = this.folded.has(o.gou) ? " fold" : "";
       const m = memos[o.code], open = this.openRows.has(o.code), starred = favOf(o.code).length > 0;
       const nm = lang === "en" && o.en ? o.en : o.name;
@@ -900,7 +901,7 @@ class Pane {
     this.wrap.innerHTML = h;
     this.wrap.scrollTop = keep;
     if (this.jump) {
-      const j = this.jump, tgt = j.lvl === "kou" ? this.wrap.querySelector("tr.h-kou.hit") : j.lvl === "gou" ? this.wrap.querySelector("tr.h-gou.hit") : this.wrap.querySelector(`tr.row[data-code="${j.cur.code}"]`);
+      const j = this.jump, tgt = j.lvl === "kou" || j.lvl === "gou" ? this.wrap.querySelector("tr.h-gou.hit") : this.wrap.querySelector(`tr.row[data-code="${j.cur.code}"]`);
       if (tgt) this.scrollToRow(tgt);
     }
     this.kouShown = null; this.gouShown = null; this.track();
@@ -950,7 +951,12 @@ class Pane {
     const th = this.wrap.querySelector("thead th"); if (!th) return;
     if (el.classList.contains("fold")) this.toggleGou(el.dataset.g, false);
     // 行き先を画面の上から4分の1あたりに置き、上の兄弟も見えるようにする
-    this.wrap.scrollTop += el.getBoundingClientRect().top - th.getBoundingClientRect().bottom - this.wrap.clientHeight * 0.25;
+    // 見出しは sticky で張り付くため、画面上の位置ではなく本来の位置（offsetTop の積み上げ）で測る
+    const sticky = [el, ...el.querySelectorAll("*")].filter(x => getComputedStyle(x).position === "sticky");
+    sticky.forEach(x => x.style.position = "static");           // 張り付き分を外して本来の位置を測る
+    const want = el.getBoundingClientRect().top - this.wrap.getBoundingClientRect().top + this.wrap.scrollTop - th.offsetHeight - this.wrap.clientHeight * 0.25;
+    sticky.forEach(x => x.style.position = "");
+    this.wrap.scrollTop = Math.max(0, want);
     el.classList.remove("flash"); void el.offsetWidth; el.classList.add("flash");
   }
   scrollToGou(gou){
