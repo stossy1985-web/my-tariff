@@ -530,7 +530,7 @@ footer.full{white-space:normal}
 "use strict";
 const D = window.TARIFF_DATA;
 const $ = s => document.querySelector(s);
-const K = {look:"mytariff.look.v1", fs:"mytariff.fontsize.v1", cond:"mytariff.cond.v1", bk:"mytariff.backup.v1", memo:"htmltariff.memo.v1", epa:"htmltariff.epa.v1", recent:"htmltariff.recent.v1", xr:"mytariff.xrates.v1", fav:"mytariff.fav.v1",
+const K = {look:"mytariff.look.v2", fs:"mytariff.fontsize.v1", cond:"mytariff.cond.v1", bk:"mytariff.backup.v1", memo:"htmltariff.memo.v1", epa:"htmltariff.epa.v1", recent:"htmltariff.recent.v1", xr:"mytariff.xrates.v1", fav:"mytariff.fav.v1",
   split:"mytariff.split.v1", link:"mytariff.link.v1", lang:"mytariff.lang.v1", q2:"mytariff.q2.v1"};
 const load = (k, def) => { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : def; } catch(e) { return def; } };
 const save = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch(e) {} };
