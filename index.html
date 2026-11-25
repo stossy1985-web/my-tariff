@@ -166,7 +166,14 @@ td.stat.dim{color:transparent}
 td.c-br{white-space:nowrap;font-weight:800;text-align:center;color:var(--faint)}
 tr.row.branch td.c-br{color:var(--branch-ink)}
 .tw{display:flex;align-items:flex-start}.tw .pre{flex:none;white-space:nowrap;line-height:inherit}.tw .tb{min-width:0;flex:1}
-td.name.tn{max-width:none}td.name.tn .tw{contain:inline-size}   /* 番号のない階層の行は右の空いている列まで伸ばす */
+td.name.tn{max-width:none}td.name.tn .tw{contain:inline-size}   .memolist{width:min(720px,94vw);max-height:86vh}
+.mlrow{display:flex;gap:12px;align-items:flex-start;width:100%;text-align:left;background:none;border:0;border-bottom:1px solid var(--line,#e5e5e5);padding:10px 4px;cursor:pointer;color:inherit;font:inherit}
+.mlrow:hover{background:var(--hov,rgba(0,0,0,.04))}
+.mlc{flex:none;font-family:ui-monospace,Consolas,monospace;font-weight:700;width:112px}
+.mlm{display:flex;flex-direction:column;gap:3px;min-width:0}
+.mlm b{font-weight:600;overflow-wrap:anywhere}
+.mlm small{color:var(--mut,#777);font-size:.85em;overflow-wrap:anywhere}
+/* 番号のない階層の行は右の空いている列まで伸ばす */
 .dash b{font-size:.8em;font-weight:700;margin:0 3px 0 1px;font-family:ui-monospace,Consolas,monospace}
 .ibr{font-weight:800;color:var(--branch-ink);margin-right:4px}
 td.name .nm.same .ibr{opacity:1}
@@ -505,10 +512,21 @@ footer.full{white-space:normal}
     <div style="display:flex;gap:8px;flex-wrap:wrap">
       <button class="btn" id="memoExport" data-i18n="export"></button>
       <label class="btn"><span data-i18n="import"></span><input type="file" id="memoImport" accept=".csv,text/csv" hidden></label>
+      <button class="btn" id="memoListOpen" data-i18n="memoListBtn"></button>
     </div>
     <div id="memoStat" class="orph"></div>
   </div>
   <div class="df"><span class="grow"></span><button class="btn pri" id="memoMgrClose" data-i18n="close"></button></div>
+</dialog>
+
+<dialog id="memoListDlg" class="memolist">
+  <div class="dh" data-i18n="memoListTitle"></div>
+  <div class="db">
+    <input class="inp" id="memoListQ" data-i18n="ph:memoListQ" style="width:100%">
+    <div class="sub" id="memoListCount"></div>
+    <div id="memoListBody"></div>
+  </div>
+  <div class="df"><span class="grow"></span><button class="btn pri" id="memoListClose" data-i18n="close"></button></div>
 </dialog>
 
 <dialog id="favDlg">
@@ -548,7 +566,7 @@ const T_ = {
   favTitle:"お気に入りの荷主",favLead:"荷主を選ぶと、その荷主に登録した税番だけが並びます。登録は表の各行の ☆ から。書き出したCSVを配れば、部内で同じリストを使えます。",
   shpNewPh:"新しい荷主の名前",add:"追加",export:"書き出し（CSV）",import:"読み込み（CSV）",
   helpTitle:"表示の意味・検索のコツ",del:"消す",cancel:"やめる",save:"保存",close:"閉じる",
-  memoTitle:"マイメモ",memoLead:"メモはこのPCのブラウザの中に保存されます（エクスプローラーからは見えません）。書き出しでファイルに残しておくと、PCを替えたときやブラウザの履歴を消したときも読み込みで戻せます。形式はExcelタリフの「マイメモ」と同じ（NACCS用コード・メモ・更新日のCSV）です。",
+  memoTitle:"マイメモ",memoListBtn:"メモだけを見る",memoListTitle:"マイメモ一覧",memoListQ:"番号・品名・メモで絞り込み",memoListEmpty:"メモはまだありません",memoListCount:"件",memoLead:"メモはこのPCのブラウザの中に保存されます（エクスプローラーからは見えません）。書き出しでファイルに残しておくと、PCを替えたときやブラウザの履歴を消したときも読み込みで戻せます。形式はExcelタリフの「マイメモ」と同じ（NACCS用コード・メモ・更新日のCSV）です。",
   qPh:"品名・番号・英文・メモで探す（例：ズボン下 61 / 6403.59）",qPh2:"右の画面（例：62）",
   hStat:"品目番号",hBr:"分岐",hName:"品名",hCode:"NACCS用コード",hUnit:"単位",hMemo:"マイメモ",
   homeH:"品名か番号を入れてください",homeP:"左上の ☰ から類を選ぶこともできます。番号は2・4・6・9・10桁のどれでも。<br>言葉はスペースで区切ると絞り込めます（例：<b>ズボン下 61</b>、<b>婦人用 ゴム -スポーツ</b>）。",
@@ -570,7 +588,7 @@ const T_ = {
   favTitle:"Favourite clients",favLead:"Pick a client to list only the codes registered for it. Register codes with the ☆ on each row. Share the exported CSV so the whole team uses the same list.",
   shpNewPh:"New client name",add:"Add",export:"Export (CSV)",import:"Import (CSV)",
   helpTitle:"Legend & search tips",del:"Delete",cancel:"Cancel",save:"Save",close:"Close",
-  memoTitle:"My notes",memoLead:"Notes are stored in this browser. Export them to a file so you can restore them after changing PCs or clearing browser data. The CSV format matches the Excel tariff's notes sheet.",
+  memoTitle:"My notes",memoListBtn:"Notes only",memoListTitle:"My notes list",memoListQ:"Filter by code, name or note",memoListEmpty:"No notes yet",memoListCount:"items",memoLead:"Notes are stored in this browser. Export them to a file so you can restore them after changing PCs or clearing browser data. The CSV format matches the Excel tariff's notes sheet.",
   qPh:"Search by description, code, English or note (e.g. underpants 61 / 6403.59)",qPh2:"Right pane (e.g. 62)",
   hStat:"Stat. code",hBr:"Br.",hName:"Description",hCode:"NACCS code",hUnit:"Unit",hMemo:"Notes",
   homeH:"Enter a description or a code",homeP:"You can also pick a chapter from ☰. Codes can be 2, 4, 6, 9 or 10 digits.<br>Separate words with spaces to narrow down (e.g. <b>underpants 61</b>, <b>women rubber -sports</b>).",
@@ -1280,6 +1298,26 @@ function memoStatus(){
 }
 $("#memoBtn").onclick = () => { hidePanel(); memoStatus(); $("#memoMgr").showModal(); };
 $("#memoMgrClose").onclick = () => $("#memoMgr").close();
+// ---- マイメモだけの一覧（番号を押すと、その行へ移動） ----
+function renderMemoList(){
+  const q = $("#memoListQ").value.trim().toLowerCase().replace(/\s+/g, "");
+  const codes = Object.keys(memos).filter(c => byCode.has(c) || !q).sort((a, b) => (memos[b].date || "").localeCompare(memos[a].date || "") || a.localeCompare(b));
+  const hit = codes.filter(c => { if (!q) return true; const o = byCode.get(c), t = (c + (o ? o.stat + o.gname + o.name : "") + memos[c].memo).toLowerCase().replace(/\s+/g, ""); return t.includes(q); });
+  $("#memoListCount").textContent = `${hit.length} / ${codes.length} ${T("memoListCount")}`;
+  if (!hit.length) { $("#memoListBody").innerHTML = `<div class="sub">${esc(T("memoListEmpty"))}</div>`; return; }
+  $("#memoListBody").innerHTML = hit.map(c => {
+    const o = byCode.get(c), m = memos[c];
+    return `<button class="mlrow" data-mlgo="${esc(c)}"><span class="mlc">${esc(c)}</span><span class="mlm"><b>${esc(m.memo)}</b><small>${o ? esc(o.stat) + "　" + esc(o.gname) + " ／ " + esc(o.name) : "<i>" + esc(T("orphan")) + "</i>"}${m.date ? "　" + esc(m.date) : ""}</small></span></button>`;
+  }).join("");
+}
+$("#memoListOpen").onclick = () => { $("#memoMgr").close(); $("#memoListQ").value = ""; renderMemoList(); $("#memoListDlg").showModal(); };
+$("#memoListQ").oninput = renderMemoList;
+$("#memoListClose").onclick = () => $("#memoListDlg").close();
+$("#memoListBody").onclick = ev => {
+  const b = ev.target.closest("[data-mlgo]"); if (!b) return;
+  const c = b.dataset.mlgo; if (!byCode.has(c)) return;
+  $("#memoListDlg").close(); panes[0].go(c, {animate:false});
+};
 $("#memoExport").onclick = () => { exportMemos(); markExported(); };
 function exportMemos(){ downloadCsv("myTARIFF_memo_" + today().replace(/\//g, "") + ".csv", ["NACCS用コード,メモ,更新日"].concat(Object.entries(memos).map(([c, m]) => [csvq(c), csvq(m.memo), csvq(m.date)].join(","))));}
 $("#memoImport").onchange = async ev => {
